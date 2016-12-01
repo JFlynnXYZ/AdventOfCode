@@ -1,0 +1,12 @@
+# HTTP Cookie File for domains related to github.com.
+# Downloaded with cookies.txt Chrome Extension (https://chrome.google.com/webstore/detail/njabckikapfpffapmjgojcnbfjonfjfg)
+# Example:  wget -x --load-cookies cookies.txt https://github.com/
+#
+github.com	FALSE	/	TRUE	1481811011	__Host-user_session_same_site	pexU2xzGa_T1pliPRynxl7TFb7Q-0WyMDqDyaqgz2Iaat7obWEAvQtPp2pOjFBwk9r1Rvh4ppSYnsdO5
+.github.com	TRUE	/	FALSE	1543673412	_ga	GA1.2.1055782467.1473929734
+github.com	FALSE	/	TRUE	0	_gh_sess	eyJzZXNzaW9uX2lkIjoiOWM5Zjg5MzI1ODNkYTk4MTliNWUwNjk3YzM2N2I5MjIiLCJsYXN0X3dyaXRlIjoxNDgwNjAxMjc1MDg1LCJjb250ZXh0IjoiLyIsInJldHVybl90byI6Ii9sdW5hcnlvcm4vc25pcHBldHMvYmxvYi9tYXN0ZXIvcXQ0L2Rlc2lnbmVyL3B5c2lkZV9keW5hbWljLnB5Iiwic3B5X3JlcG8iOiJhZGFtLXAvbWFya2Rvd24taGVyZSIsInNweV9yZXBvX2F0IjoxNDgwNTk1MDY5LCJmbGFzaCI6eyJkaXNjYXJkIjpbImFuYWx5dGljc19sb2NhdGlvbiJdLCJmbGFzaGVzIjp7ImFuYWx5dGljc19sb2NhdGlvbiI6Ii9kYXNoYm9hcmQifX19--e9b5a89da880c9967b70a81be216e58ea7692454
+.github.com	TRUE	/	FALSE	1537001734	_octo	GH1.1.1930725573.1473929735
+.github.com	TRUE	/	TRUE	2105446866	dotcom_user	JFDesigner
+.github.com	TRUE	/	TRUE	2105446866	logged_in	yes
+github.com	FALSE	/	TRUE	0	tz	Europe%2FLondon
+github.com	FALSE	/	TRUE	1481811011	user_session	pexU2xzGa_T1pliPRynxl7TFb7Q-0WyMDqDyaqgz2Iaat7obWEAvQtPp2pOjFBwk9r1Rvh4ppSYnsdO5
