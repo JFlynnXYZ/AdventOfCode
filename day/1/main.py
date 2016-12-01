@@ -89,3 +89,12 @@ DAY_HTML_DESC = '\n'.join((textwrap.fill(x, LINE_LENGTH) for x in DAY_HTML_PARSE
 
 print DAY_HTML_DESC
 print "INPUT:\n{}".format(textwrap.fill(' '.join(DAY_INPUT), LINE_LENGTH))
+
+# splitStr = [x.strip() for x in input.split(",")]
+# L = complex(0, 1)
+# R = complex(0, -1)
+# dirs = [[(L if x[0] is "L" else R), int(x[1:])] for x in splitStr] # "into form [R, 1]..."
+# z = complex(0, 0)
+# for dir in reversed(dirs):
+#         z = dir[0]*(dir[1] + z)
+# z = L*z
