@@ -296,4 +296,4 @@ def build(year=2016, overwrite=False, overwriteDayPy=False):
 
 
 if __name__ == "__main__":
-    build(overwrite=True, overwriteDayPy=True)
+    build(overwrite=False, overwriteDayPy=False)
