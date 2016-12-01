@@ -1,11 +1,21 @@
+########################################################################################################################
+### Advent Setup #######################################################################################################
+########################################################################################################################
+
 import os
-from AdventBuilder import prettyInfo, prettyAnswers
-import collections
+from AdventBuilder import setupDayVariables, prettyInfo, prettyAnswers
 
 __dir__ = os.path.dirname(__file__)
-DAY_NUM = int(os.path.basename(__dir__))
-DAY_DESC = ''.join(open("desc_{}.txt".format(DAY_NUM)).readlines())
-DAY_INPUT = ''.join(open("input_{}.txt".format(DAY_NUM)).readlines()).strip("\n")
+DAY_NUM, DAY_DESC, DAY_INPUT = setupDayVariables(__dir__)
+
+########################################################################################################################
+#### My Solution #######################################################################################################
+########################################################################################################################
+
+
+def taxiCabDistance(start, end):
+    return abs(start[0] - end[0]) + abs(start[1] - end[1])
+
 
 class Direction(object):
     NORTH = 0
@@ -14,13 +24,12 @@ class Direction(object):
     WEST = 3
     TOTAL = 4
 
+
 class Rotate(object):
     RIGHT = 1
     LEFT = -1
     TOTAL = 2
 
-def taxicabDistance(start, end):
-    return abs(start[0] - end[0]) + abs(start[1] - end[1])
 
 class Player(object):
     def __init__(self, commands=None):
@@ -30,17 +39,17 @@ class Player(object):
         self.visitedTwice = False
         self.firstLocationVisitedTwice = None
 
-        if not commands is None:
+        if commands is not None:
             self.parseCommands(commands)
 
     def distanceFromFirstLocationVisitedTwice(self):
-        return taxicabDistance([0, 0], self.firstLocationVisitedTwice)
+        return taxiCabDistance([0, 0], self.firstLocationVisitedTwice)
 
     def distanceFromLocation(self, location):
-        return taxicabDistance(self.location, location)
+        return taxiCabDistance(self.location, location)
 
     def distanceFromStartLocation(self):
-        return self.distanceFromLocation([0,0])
+        return self.distanceFromLocation([0, 0])
 
     def rotate(self, rot):
         self.facing += rot
@@ -65,8 +74,8 @@ class Player(object):
     def checkIfAlreadyVisited(self, location):
         if self.location in self.previousLocations and not self.visitedTwice:
             self.visitedTwice = True
-            self.firstLocationVisitedTwice = self.location[:]
-        self.previousLocations.append(self.location[:])
+            self.firstLocationVisitedTwice = location[:]
+        self.previousLocations.append(location[:])
 
     def command(self, strCmd):
         rot = Rotate.RIGHT if strCmd[0] == "R" else Rotate.LEFT
@@ -80,10 +89,19 @@ class Player(object):
             self.command(strCmd)
 
 
+########################################################################################################################
+### Output #############################################################################################################
+########################################################################################################################
+
+
+def solution():
+    player = Player(DAY_INPUT)
+    return player.distanceFromStartLocation(), player.distanceFromFirstLocationVisitedTwice()
+
+
 def main():
     print prettyInfo(DAY_DESC, DAY_INPUT)
-    player = Player(DAY_INPUT)
-    print prettyAnswers(player.distanceFromStartLocation(), player.distanceFromFirstLocationVisitedTwice())
+    print prettyAnswers(*solution())
 
 
 if __name__ == "__main__":

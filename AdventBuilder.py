@@ -27,7 +27,8 @@ class AdventHTMLParser(HTMLParser):
         self.storedLink = ""
         self.isUnorderdList = False
 
-    def get_link_from_tag(self, attrs):
+    @staticmethod
+    def get_link_from_tag(attrs):
         link = ""
         for at in attrs:
             if at[0] == "href":
@@ -86,6 +87,7 @@ class AdventHTMLParser(HTMLParser):
 class AdventCookieJar(cookielib.FileCookieJar):
     def _really_load(self, f, filename, ignore_discard, ignore_expires):
         now = time.time()
+        line = None
         try:
             while 1:
                 line = f.readline()
@@ -97,12 +99,11 @@ class AdventCookieJar(cookielib.FileCookieJar):
                     line = line[:-1]
 
                 # skip comments and blank lines XXX what is $ for?
-                if (line.strip().startswith(("#", "$")) or
-                    line.strip() == ""):
+                if line.strip().startswith(("#", "$")) or line.strip() == "":
                     continue
 
                 domain, domain_specified, path, secure, expires, name, value = \
-                        line.split("\t")
+                    line.split("\t")
                 secure = (secure == "TRUE")
                 domain_specified = (domain_specified == "TRUE")
                 if name == "":
@@ -122,15 +123,15 @@ class AdventCookieJar(cookielib.FileCookieJar):
 
                 # assume path_specified is false
                 c = cookielib.Cookie(0, name, value,
-                           None, False,
-                           domain, domain_specified, initial_dot,
-                           path, False,
-                           secure,
-                           expires,
-                           discard,
-                           None,
-                           None,
-                           {})
+                                     None, False,
+                                     domain, domain_specified, initial_dot,
+                                     path, False,
+                                     secure,
+                                     expires,
+                                     discard,
+                                     None,
+                                     None,
+                                     {})
                 if not ignore_discard and c.discard:
                     continue
                 if not ignore_expires and c.is_expired(now):
@@ -142,52 +143,52 @@ class AdventCookieJar(cookielib.FileCookieJar):
         except Exception:
             cookielib._warn_unhandled_exception()
             raise cookielib.LoadError("invalid Netscape format cookies file %r: %r" %
-                            (filename, line))
+                                      (filename, line))
 
     def save(self, filename=None, ignore_discard=False,
-                 ignore_expires=True):
-            if filename is None:
-                if self.filename is not None:
-                    filename = self.filename
-                else:
-                    raise ValueError(cookielib.MISSING_FILENAME_TEXT)
+             ignore_expires=True):
+        if filename is None:
+            if self.filename is not None:
+                filename = self.filename
+            else:
+                raise ValueError(cookielib.MISSING_FILENAME_TEXT)
 
-            f = open(filename, "w")
-            try:
-                now = time.time()
-                for cookie in self:
-                    if not ignore_discard and cookie.discard:
-                        continue
-                    if not ignore_expires and cookie.is_expired(now):
-                        continue
-                    if cookie.secure:
-                        secure = "TRUE"
-                    else:
-                        secure = "FALSE"
-                    if cookie.domain.startswith("."):
-                        initial_dot = "TRUE"
-                    else:
-                        initial_dot = "FALSE"
-                    if cookie.expires is not None:
-                        expires = str(cookie.expires)
-                    else:
-                        expires = ""
-                    if cookie.value is None:
-                        # cookies.txt regards 'Set-Cookie: foo' as a cookie
-                        # with no name, whereas cookielib regards it as a
-                        # cookie with no value.
-                        name = ""
-                        value = cookie.name
-                    else:
-                        name = cookie.name
-                        value = cookie.value
-                    f.write(
-                        "\t".join(
-                            [cookie.domain, initial_dot, cookie.path,
-                             secure, expires, name, value]) +
-                        "\n")
-            finally:
-                f.close()
+        f = open(filename, "w")
+        try:
+            now = time.time()
+            for cookie in self:
+                if not ignore_discard and cookie.discard:
+                    continue
+                if not ignore_expires and cookie.is_expired(now):
+                    continue
+                if cookie.secure:
+                    secure = "TRUE"
+                else:
+                    secure = "FALSE"
+                if cookie.domain.startswith("."):
+                    initial_dot = "TRUE"
+                else:
+                    initial_dot = "FALSE"
+                if cookie.expires is not None:
+                    expires = str(cookie.expires)
+                else:
+                    expires = ""
+                if cookie.value is None:
+                    # cookies.txt regards 'Set-Cookie: foo' as a cookie
+                    # with no name, whereas cookielib regards it as a
+                    # cookie with no value.
+                    name = ""
+                    value = cookie.name
+                else:
+                    name = cookie.name
+                    value = cookie.value
+                f.write(
+                    "\t".join(
+                        [cookie.domain, initial_dot, cookie.path,
+                         secure, expires, name, value]) +
+                    "\n")
+        finally:
+            f.close()
 
 
 def createHtmlLoader():
@@ -216,11 +217,11 @@ def getHtmlPageWithCookies(path, opener=None):
 
 
 def getHtmlDesc(dayNum, year=2016, opener=None):
-    html = getHtmlPageWithCookies(DAY_HTML_DAY_PATH_BUILD.format(year=year, dayNum=dayNum))
+    html = getHtmlPageWithCookies(DAY_HTML_DAY_PATH_BUILD.format(year=year, dayNum=dayNum), opener)
     if html is None:
         return None
     else:
-        html.replace("\n", "")
+        html = html.replace("\n", "")
 
     htmlParser = AdventHTMLParser()
     htmlParser.feed(html)
@@ -240,24 +241,38 @@ def prettyInfo(desc, inp):
 
 
 def prettyAnswers(task1, task2):
-    return '\n'.join(("--- ANSWERS ---", "Task 1: "+str(task1), "Task 2: "+str(task2)))
+    return '\n'.join(("--- ANSWERS ---", "Task 1: " + str(task1), "Task 2: " + str(task2)))
+
+
+def setupDayVariables(path):
+    try:
+        DAY_NUM = int(os.path.basename(path))
+        DAY_DESC = ''.join(open("desc_{}.txt".format(DAY_NUM)).readlines())
+        DAY_INPUT = ''.join(open("input_{}.txt".format(DAY_NUM)).readlines()).strip("\n")
+    except ValueError:
+        print "File {} in advent day folder".format(path)
+        DAY_NUM = 0
+        DAY_DESC = ""
+        DAY_INPUT = ""
+
+    return DAY_NUM, DAY_DESC, DAY_INPUT
 
 
 def build(year=2016, overwrite=False, overwriteDayPy=False):
+    opener = createHtmlLoader()
     for dayNum in range(1, 26):
         dayPath = os.path.join(__dir__, "day", str(dayNum))
-        descPath = os.path.join(dayPath, "desc_"+str(dayNum)+".txt")
-        inpuPath = os.path.join(dayPath, "input_"+str(dayNum)+".txt")
-        dayPyPath = os.path.join(dayPath, "day_"+str(dayNum)+".py")
+        descPath = os.path.join(dayPath, "desc_" + str(dayNum) + ".txt")
+        inpuPath = os.path.join(dayPath, "input_" + str(dayNum) + ".txt")
+        dayPyPath = os.path.join(dayPath, "day_" + str(dayNum) + ".py")
         filesCreated = False
 
-        desc = getHtmlDesc(dayNum, year)
+        desc = getHtmlDesc(dayNum, year, opener)
         if desc is None:
             break
         else:
             print "Page {} found".format(dayNum)
-        inpu = getInputData(dayNum, year)
-
+        inpu = getInputData(dayNum, year, opener)
 
         if not os.path.exists(dayPyPath) or (overwrite and overwriteDayPy):
             shutil.copyfile("day.py", dayPyPath)
@@ -281,4 +296,4 @@ def build(year=2016, overwrite=False, overwriteDayPy=False):
 
 
 if __name__ == "__main__":
-    build()
+    build(overwrite=True, overwriteDayPy=True)
