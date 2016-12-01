@@ -1,6 +1,5 @@
-import sys
 import os
-import re, time
+import time
 import urllib2
 from HTMLParser import HTMLParser
 import textwrap
@@ -51,8 +50,6 @@ class AdventHTMLParser(HTMLParser):
                         self.desc += "\t - "
                 if not isStart:
                     self.desc += "\n"
-
-
 
             if tag in DOUBLE_NEWLINE_TAGS and not isStart:
                 self.desc += "\n\n"
@@ -148,7 +145,7 @@ class AdventCookieJar(cookielib.FileCookieJar):
                             (filename, line))
 
     def save(self, filename=None, ignore_discard=False,
-                 ignore_expires=False):
+                 ignore_expires=True):
             if filename is None:
                 if self.filename is not None:
                     filename = self.filename
@@ -193,24 +190,40 @@ class AdventCookieJar(cookielib.FileCookieJar):
                 f.close()
 
 
-def getInputData(dayNum, year=2016):
+def createHtmlLoader():
     cj = AdventCookieJar("cookies.txt")
     cj.load()
     opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj))
-    return opener.open(DAY_HTML_DAY_PATH_INPUT_BUILD.format(year=year, dayNum=dayNum)).read()
+    return opener
 
 
-def getHtmlDesc(dayNum, year=2016):
+def getInputData(dayNum, year=2016, opener=None):
+    return getHtmlPageWithCookies(DAY_HTML_DAY_PATH_INPUT_BUILD.format(year=year, dayNum=dayNum), opener)
+
+
+def getHtmlPageWithCookies(path, opener=None):
+    if opener is None:
+        opener = createHtmlLoader()
     try:
-        htmlData = urllib2.urlopen(DAY_HTML_DAY_PATH_BUILD.format(year=year, dayNum=dayNum)).read().replace("\n", "")
+        html = opener.open(path).read()
     except urllib2.HTTPError as e:
         if e.code == 404:
-            print "Page '{}' Not found".format(dayNum)
+            print "Page '{}' Not found".format(path)
             return None
         else:
             raise e
+    return html
+
+
+def getHtmlDesc(dayNum, year=2016, opener=None):
+    html = getHtmlPageWithCookies(DAY_HTML_DAY_PATH_BUILD.format(year=year, dayNum=dayNum))
+    if html is None:
+        return None
+    else:
+        html.replace("\n", "")
+
     htmlParser = AdventHTMLParser()
-    htmlParser.feed(htmlData)
+    htmlParser.feed(html)
     return htmlParser.desc
 
 
@@ -222,22 +235,50 @@ def prettyInput(inp):
     return textwrap.fill(inp, LINE_LENGTH)
 
 
-def build(year=2016):
+def prettyInfo(desc, inp):
+    return '\n'.join((prettyDesc(desc), "\nINPUT:", prettyInput(inp), "\n"))
+
+
+def prettyAnswers(task1, task2):
+    return '\n'.join(("--- ANSWERS ---", "Task 1: "+str(task1), "Task 2: "+str(task2)))
+
+
+def build(year=2016, overwrite=False, overwriteDayPy=False):
     for dayNum in range(1, 26):
+        dayPath = os.path.join(__dir__, "day", str(dayNum))
+        descPath = os.path.join(dayPath, "desc_"+str(dayNum)+".txt")
+        inpuPath = os.path.join(dayPath, "input_"+str(dayNum)+".txt")
+        dayPyPath = os.path.join(dayPath, "day_"+str(dayNum)+".py")
+        filesCreated = False
+
         desc = getHtmlDesc(dayNum, year)
         if desc is None:
             break
+        else:
+            print "Page {} found".format(dayNum)
         inpu = getInputData(dayNum, year)
-        path = os.path.join(__dir__, "day", str(dayNum))
-        descPath = os.path.join(path, "desc_"+str(dayNum)+".txt")
-        inpuPath = os.path.join(path, "input_"+str(dayNum)+".txt")
-        dayPyPath = os.path.join(path, "day_"+str(dayNum)+".py")
-        with open(descPath, 'w') as descF, open(inpuPath, 'w') as inpuF:
-            descF.write(prettyDesc(desc))
-            inpuF.write(inpu)
-            if not os.path.exists(dayPyPath):
-                shutil.copyfile("day.py", dayPyPath)
-            print "Page {} Found and info downloaded".format(dayNum)
+
+
+        if not os.path.exists(dayPyPath) or (overwrite and overwriteDayPy):
+            shutil.copyfile("day.py", dayPyPath)
+            print "\tday.py copied to {}".format(dayPyPath)
+            filesCreated = True
+
+        if not os.path.exists(descPath) or overwrite:
+            with open(descPath, 'w+') as descF:
+                descF.write(prettyDesc(desc))
+            print "\tDescription created at {}".format(descPath)
+            filesCreated = True
+
+        if not os.path.exists(inpuPath) or overwrite:
+            with open(inpuPath, 'w+') as inpuF:
+                inpuF.write(inpu)
+            print "\tInput created at {}".format(descPath)
+            filesCreated = True
+
+        if not filesCreated:
+            print "\t No files created"
+
 
 if __name__ == "__main__":
     build()

@@ -1,12 +1,89 @@
 import os
+from AdventBuilder import prettyInfo, prettyAnswers
+import collections
 
 __dir__ = os.path.dirname(__file__)
 DAY_NUM = int(os.path.basename(__dir__))
-DAY_INPUT = '\n'.join(open("input_{}.txt".format(DAY_NUM)).readlines())
+DAY_DESC = ''.join(open("desc_{}.txt".format(DAY_NUM)).readlines())
+DAY_INPUT = ''.join(open("input_{}.txt".format(DAY_NUM)).readlines()).strip("\n")
+
+class Direction(object):
+    NORTH = 0
+    EAST = 1
+    SOUTH = 2
+    WEST = 3
+    TOTAL = 4
+
+class Rotate(object):
+    RIGHT = 1
+    LEFT = -1
+    TOTAL = 2
+
+def taxicabDistance(start, end):
+    return abs(start[0] - end[0]) + abs(start[1] - end[1])
+
+class Player(object):
+    def __init__(self, commands=None):
+        self.facing = Direction.NORTH
+        self.location = [0, 0]
+        self.previousLocations = [self.location[:]]
+        self.visitedTwice = False
+        self.firstLocationVisitedTwice = None
+
+        if not commands is None:
+            self.parseCommands(commands)
+
+    def distanceFromFirstLocationVisitedTwice(self):
+        return taxicabDistance([0, 0], self.firstLocationVisitedTwice)
+
+    def distanceFromLocation(self, location):
+        return taxicabDistance(self.location, location)
+
+    def distanceFromStartLocation(self):
+        return self.distanceFromLocation([0,0])
+
+    def rotate(self, rot):
+        self.facing += rot
+        if self.facing >= Direction.TOTAL:
+            self.facing -= Direction.TOTAL
+        elif self.facing < Direction.NORTH:
+            self.facing += Direction.TOTAL
+
+    def move(self, mv):
+        for i in range(mv):
+            if self.facing == Direction.NORTH:
+                self.location[1] += 1
+            elif self.facing == Direction.EAST:
+                self.location[0] += 1
+            elif self.facing == Direction.SOUTH:
+                self.location[1] -= 1
+            elif self.facing == Direction.WEST:
+                self.location[0] -= 1
+
+            self.checkIfAlreadyVisited(self.location)
+
+    def checkIfAlreadyVisited(self, location):
+        if self.location in self.previousLocations and not self.visitedTwice:
+            self.visitedTwice = True
+            self.firstLocationVisitedTwice = self.location[:]
+        self.previousLocations.append(self.location[:])
+
+    def command(self, strCmd):
+        rot = Rotate.RIGHT if strCmd[0] == "R" else Rotate.LEFT
+        mv = int(strCmd[1:])
+        self.rotate(rot)
+        self.move(mv)
+
+    def parseCommands(self, strCmds):
+        strCmdLs = strCmds.split(", ")
+        for strCmd in strCmdLs:
+            self.command(strCmd)
 
 
 def main():
-    print DAY_INPUT
+    print prettyInfo(DAY_DESC, DAY_INPUT)
+    player = Player(DAY_INPUT)
+    print prettyAnswers(player.distanceFromStartLocation(), player.distanceFromFirstLocationVisitedTwice())
 
 
 if __name__ == "__main__":
