@@ -8,8 +8,7 @@ import shutil
 
 __dir__ = os.path.dirname(__file__)
 
-DOUBLE_NEWLINE_TAGS = ("h1", "h2", "p")
-SINGLE_NEWLINE_TAGS = ("ul",)
+SINGLE_NEWLINE_TAGS = ("h1", "h2", "p")
 LINE_LENGTH = 120
 
 COOKIES_PATH = os.path.join(__dir__, "cookies.txt")
@@ -26,6 +25,8 @@ class AdventHTMLParser(HTMLParser):
         self.isLink = False
         self.storedLink = ""
         self.isUnorderdList = False
+        self.isCode = False
+        self.isPre = False
 
     @staticmethod
     def get_link_from_tag(attrs):
@@ -39,7 +40,7 @@ class AdventHTMLParser(HTMLParser):
     def handle_tag(self, tag, attrs, isStart=True):
         if self.foundDesc:
             if tag == "em":
-                self.desc += "_"
+                self.desc += "__"
             elif tag == "a":
                 if isStart:
                     self.storedLink = self.get_link_from_tag(attrs)
@@ -48,12 +49,16 @@ class AdventHTMLParser(HTMLParser):
             elif tag == "li":
                 if self.isUnorderdList:
                     if isStart:
-                        self.desc += "\t - "
+                        self.desc += "- "
                 if not isStart:
                     self.desc += "\n"
+            elif tag == "code":
+                self.desc += "```"
+                if isStart and self.isPre:
+                    self.desc += "\n"
+            elif tag == "h2" and isStart:
+                self.desc += "# "
 
-            if tag in DOUBLE_NEWLINE_TAGS and not isStart:
-                self.desc += "\n\n"
             if tag in SINGLE_NEWLINE_TAGS and not isStart:
                 self.desc += "\n"
 
@@ -65,23 +70,35 @@ class AdventHTMLParser(HTMLParser):
             self.isLink = True
         elif tag == "ul":
             self.isUnorderdList = True
+        elif tag == "code":
+            self.isCode = True
+        elif tag == "pre":
+            self.isPre = True
 
         self.handle_tag(tag, attrs, True)
 
     def handle_endtag(self, tag):
         if tag == "article" and self.foundDesc:
             self.foundDesc = False
-        if tag == "a":
+        elif tag == "a":
             self.isLink = False
-        if tag == "ul":
+        elif tag == "ul":
             self.isUnorderdList = False
+        elif tag == "code":
+            self.isCode = False
+        elif tag == "pre":
+            self.isPre = False
+
         self.handle_tag(tag, None, False)
 
     def handle_data(self, data):
         if self.isLink:
             data = "[" + data + "]"
+        if self.isUnorderdList:
+            data = data.strip("\n")
         if self.foundDesc:
             self.desc += data
+
 
 
 class AdventCookieJar(cookielib.FileCookieJar):
@@ -198,11 +215,11 @@ def createHtmlLoader():
     return opener
 
 
-def getInputData(dayNum, year=2016, opener=None):
-    return getHtmlPageWithCookies(DAY_HTML_DAY_PATH_INPUT_BUILD.format(year=year, dayNum=dayNum), opener)
+def getInputData(dayNum, year=2016, opener=None, delay=5):
+    return getHtmlPageWithCookies(DAY_HTML_DAY_PATH_INPUT_BUILD.format(year=year, dayNum=dayNum), opener, delay)
 
 
-def getHtmlPageWithCookies(path, opener=None):
+def getHtmlPageWithCookies(path, opener=None, delay=5):
     if opener is None:
         opener = createHtmlLoader()
     try:
@@ -213,15 +230,17 @@ def getHtmlPageWithCookies(path, opener=None):
             return None
         else:
             raise e
+
+    time.sleep(delay)
     return html
 
 
-def getHtmlDesc(dayNum, year=2016, opener=None):
-    html = getHtmlPageWithCookies(DAY_HTML_DAY_PATH_BUILD.format(year=year, dayNum=dayNum), opener)
+def getHtmlDesc(dayNum, year=2016, opener=None, delay=5):
+    html = getHtmlPageWithCookies(DAY_HTML_DAY_PATH_BUILD.format(year=year, dayNum=dayNum), opener, delay)
     if html is None:
         return None
     else:
-        html = html.replace("\n", "")
+        pass
 
     htmlParser = AdventHTMLParser()
     htmlParser.feed(html)
@@ -258,27 +277,33 @@ def setupDayVariables(path):
     return DAY_NUM, DAY_DESC, DAY_INPUT
 
 
-def build(year=2016, overwrite=False, overwriteDayPy=False, delay=5):
+def build(year=2016, overwrite=False, overwriteDesc=False, overwriteInpu=False, overwriteDayPy=False, delay=5, skip=(None,)):
     opener = createHtmlLoader()
     for dayNum in range(1, 26):
+        if dayNum in skip:
+            print "Skipping dayNum {}".format(dayNum)
+            continue
         dayPath = os.path.join(__dir__, "day", str(dayNum))
         if os.path.exists(dayPath) and not overwrite:
             print "Not overwriting and files already downloaded: {}".format(dayNum)
             continue
+        else:
+            pathExists = True
 
-        descPath = os.path.join(dayPath, "desc_" + str(dayNum) + ".txt")
+        descPath = os.path.join(dayPath, "desc_" + str(dayNum) + ".md")
         inpuPath = os.path.join(dayPath, "input_" + str(dayNum) + ".txt")
         dayPyPath = os.path.join(dayPath, "day_" + str(dayNum) + ".py")
         filesCreated = False
 
-        desc = getHtmlDesc(dayNum, year, opener)
-        if desc is None:
-            break
-        else:
-            print "Page {} found".format(dayNum)
+        if not os.path.exists(descPath) or overwriteDesc:
+            desc = getHtmlDesc(dayNum, year, opener, delay)
+            if desc is None:
+                break
+            else:
+                print "Page {} found".format(dayNum)
 
-        time.sleep(delay)
-        inpu = getInputData(dayNum, year, opener)
+        if not os.path.exists(inpuPath) or overwriteInpu:
+            inpu = getInputData(dayNum, year, opener, delay)
 
         if not os.path.exists(dayPyPath) or (overwrite and overwriteDayPy):
             os.makedirs(os.path.dirname(dayPyPath))
@@ -286,13 +311,13 @@ def build(year=2016, overwrite=False, overwriteDayPy=False, delay=5):
             print "\tday.py copied to {}".format(dayPyPath)
             filesCreated = True
 
-        if not os.path.exists(descPath) or overwrite:
+        if not os.path.exists(descPath) or (overwrite and overwriteDesc):
             with open(descPath, 'w+') as descF:
                 descF.write(prettyDesc(desc))
             print "\tDescription created at {}".format(descPath)
             filesCreated = True
 
-        if not os.path.exists(inpuPath) or overwrite:
+        if not os.path.exists(inpuPath) or (overwrite and overwriteInpu):
             with open(inpuPath, 'w+') as inpuF:
                 inpuF.write(inpu)
             print "\tInput created at {}".format(descPath)
@@ -303,4 +328,4 @@ def build(year=2016, overwrite=False, overwriteDayPy=False, delay=5):
 
 
 if __name__ == "__main__":
-    build(overwrite=False, overwriteDayPy=False)
+    build(overwrite=True, overwriteDayPy=False, overwriteDesc=True, skip=(1,))
