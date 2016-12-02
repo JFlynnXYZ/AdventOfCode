@@ -258,10 +258,14 @@ def setupDayVariables(path):
     return DAY_NUM, DAY_DESC, DAY_INPUT
 
 
-def build(year=2016, overwrite=False, overwriteDayPy=False):
+def build(year=2016, overwrite=False, overwriteDayPy=False, delay=5):
     opener = createHtmlLoader()
     for dayNum in range(1, 26):
         dayPath = os.path.join(__dir__, "day", str(dayNum))
+        if os.path.exists(dayPath) and not overwrite:
+            print "Not overwriting and files already downloaded: {}".format(dayNum)
+            continue
+
         descPath = os.path.join(dayPath, "desc_" + str(dayNum) + ".txt")
         inpuPath = os.path.join(dayPath, "input_" + str(dayNum) + ".txt")
         dayPyPath = os.path.join(dayPath, "day_" + str(dayNum) + ".py")
@@ -272,9 +276,12 @@ def build(year=2016, overwrite=False, overwriteDayPy=False):
             break
         else:
             print "Page {} found".format(dayNum)
+
+        time.sleep(delay)
         inpu = getInputData(dayNum, year, opener)
 
         if not os.path.exists(dayPyPath) or (overwrite and overwriteDayPy):
+            os.makedirs(os.path.dirname(dayPyPath))
             shutil.copyfile("day.py", dayPyPath)
             print "\tday.py copied to {}".format(dayPyPath)
             filesCreated = True
