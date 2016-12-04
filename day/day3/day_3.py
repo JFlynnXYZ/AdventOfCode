@@ -6,7 +6,7 @@ import os
 from AdventBuilder import setupDayVariables, prettyInfo, prettyAnswers
 
 __dir__ = os.path.dirname(__file__)
-DAY_NUM, DAY_DESC, DAY_INPUT = setupDayVariables(__dir__)
+DAY_NUM, DAY_DESC, DAY_INPUT, DAY_INPUT_STR = setupDayVariables(__dir__)
 
 ########################################################################################################################
 #### My Solution #######################################################################################################
@@ -19,11 +19,14 @@ DAY_NUM, DAY_DESC, DAY_INPUT = setupDayVariables(__dir__)
 
 
 def solution():
-    return None, None
+    # Mmmmmm I heard you like one liners
+    sol1 = len(tuple(True for a,b,c in ((int(x) for x in l.split()) for l in DAY_INPUT) if c < a+b and a < c+b and b < c+a))
+    sol2 = sum([len(x) for x in [[True for a,b,c in zip(*[[int(x) for x in l.split()] for l in DAY_INPUT[i:i + 3]]) if c<a+b and a<c+b and b<c+a] for i in xrange(0, len(DAY_INPUT), 3)]])
+    return sol1, sol2
 
 
 def main():
-    print prettyInfo(DAY_DESC, DAY_INPUT)
+    print prettyInfo(DAY_DESC, DAY_INPUT_STR)
     print prettyAnswers(*solution())
 
 

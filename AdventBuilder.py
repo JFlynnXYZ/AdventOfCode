@@ -252,7 +252,7 @@ def prettyDesc(desc):
 
 
 def prettyInput(inp):
-    return textwrap.fill(inp, LINE_LENGTH)
+    return '\n'.join([textwrap.fill(x, LINE_LENGTH) for x in inp.splitlines()][:5]) + "\n..."
 
 
 def prettyInfo(desc, inp):
@@ -265,16 +265,19 @@ def prettyAnswers(task1, task2):
 
 def setupDayVariables(path):
     try:
-        DAY_NUM = int(os.path.basename(path))
-        DAY_DESC = ''.join(open("desc_{}.txt".format(DAY_NUM)).readlines())
-        DAY_INPUT = ''.join(open("input_{}.txt".format(DAY_NUM)).readlines()).strip("\n")
+        baseDir = os.path.basename(path)
+        DAY_NUM = int(baseDir.split("day")[1])
+        DAY_DESC = ''.join(open(os.path.join(path, "desc_{}.md".format(DAY_NUM))).readlines())
+        DAY_INPUT = open(os.path.join(path, "input_{}.txt".format(DAY_NUM))).readlines()
+        DAY_INPUT_STR = ''.join(DAY_INPUT)
     except ValueError:
         print "File {} in advent day folder".format(path)
         DAY_NUM = 0
         DAY_DESC = ""
         DAY_INPUT = ""
+        DAY_INPUT_STR = ""
 
-    return DAY_NUM, DAY_DESC, DAY_INPUT
+    return DAY_NUM, DAY_DESC, DAY_INPUT, DAY_INPUT_STR
 
 
 def build(year=2016, overwrite=False, overwriteDesc=False, overwriteInpu=False, overwriteDayPy=False, delay=5, skip=(None,)):
@@ -283,16 +286,18 @@ def build(year=2016, overwrite=False, overwriteDesc=False, overwriteInpu=False, 
         if dayNum in skip:
             print "Skipping dayNum {}".format(dayNum)
             continue
-        dayPath = os.path.join(__dir__, "day", str(dayNum))
+        dayPath = os.path.join(__dir__, "day", "day"+str(dayNum))
         if os.path.exists(dayPath) and not overwrite:
             print "Not overwriting and files already downloaded: {}".format(dayNum)
             continue
         else:
             pathExists = True
 
+        pyFileName = "day_" + str(dayNum)
         descPath = os.path.join(dayPath, "desc_" + str(dayNum) + ".md")
         inpuPath = os.path.join(dayPath, "input_" + str(dayNum) + ".txt")
-        dayPyPath = os.path.join(dayPath, "day_" + str(dayNum) + ".py")
+        dayPyPath = os.path.join(dayPath, pyFileName + ".py")
+        initPath = os.path.join(dayPath, "__init__.py")
         filesCreated = False
 
         if not os.path.exists(descPath) or overwriteDesc:
@@ -323,9 +328,14 @@ def build(year=2016, overwrite=False, overwriteDesc=False, overwriteInpu=False, 
             print "\tInput created at {}".format(descPath)
             filesCreated = True
 
+        if not os.path.exists(initPath) or overwrite:
+            with open(initPath, 'w+') as initF:
+                initF.write("from {} import *".format(pyFileName))
+            filesCreated = True
+
         if not filesCreated:
             print "\t No files created"
 
 
 if __name__ == "__main__":
-    build(overwrite=True, overwriteDayPy=False, overwriteDesc=True, skip=(1,))
+    build(overwrite=True, overwriteDayPy=False, overwriteDesc=True, skip=(1, 2, 3,))
