@@ -1,5 +1,5 @@
 """
-Be careful when using this! The site can't take a lot of people accessing the site at once and so all web
+Be careful when using this! The site can't take a lot of people accessing it at once and so all web
 requests are with a delay of 5 seconds to stop a DDOS of the site. I recommend you skip the days you
 have already downloaded in the build function and use sparingly!
 """
