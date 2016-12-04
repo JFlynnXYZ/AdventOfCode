@@ -1,3 +1,8 @@
+"""
+Be careful when using this! The site can't take a lot of people accessing the site at once and so all web
+requests are with a delay of 5 seconds to stop a DDOS of the site. I recommend you skip the days you
+have already downloaded in the build function and use sparingly!
+"""
 import os
 import time
 import urllib2
@@ -98,7 +103,6 @@ class AdventHTMLParser(HTMLParser):
             data = data.strip("\n")
         if self.foundDesc:
             self.desc += data
-
 
 
 class AdventCookieJar(cookielib.FileCookieJar):
@@ -219,7 +223,10 @@ def getInputData(dayNum, year=2016, opener=None, delay=5):
     return getHtmlPageWithCookies(DAY_HTML_DAY_PATH_INPUT_BUILD.format(year=year, dayNum=dayNum), opener, delay)
 
 
-def getHtmlPageWithCookies(path, opener=None, delay=5):
+def getHtmlPageWithCookies(path, opener=None, delay=5, firstTime=True):
+    if not firstTime:
+        time.sleep(delay)
+
     if opener is None:
         opener = createHtmlLoader()
     try:
@@ -230,8 +237,6 @@ def getHtmlPageWithCookies(path, opener=None, delay=5):
             return None
         else:
             raise e
-
-    time.sleep(delay)
     return html
 
 
@@ -282,10 +287,12 @@ def setupDayVariables(path):
 
 def build(year=2016, overwrite=False, overwriteDesc=False, overwriteInpu=False, overwriteDayPy=False, delay=5, skip=(None,)):
     opener = createHtmlLoader()
+    firstTime = True
     for dayNum in range(1, 26):
         if dayNum in skip:
             print "Skipping dayNum {}".format(dayNum)
             continue
+
         dayPath = os.path.join(__dir__, "day", "day"+str(dayNum))
         if os.path.exists(dayPath) and not overwrite:
             print "Not overwriting and files already downloaded: {}".format(dayNum)
@@ -301,14 +308,16 @@ def build(year=2016, overwrite=False, overwriteDesc=False, overwriteInpu=False, 
         filesCreated = False
 
         if not os.path.exists(descPath) or overwriteDesc:
-            desc = getHtmlDesc(dayNum, year, opener, delay)
+            desc = getHtmlDesc(dayNum, year, opener, delay, firstTime)
+            firstTime = False
             if desc is None:
                 break
             else:
                 print "Page {} found".format(dayNum)
 
         if not os.path.exists(inpuPath) or overwriteInpu:
-            inpu = getInputData(dayNum, year, opener, delay)
+            inpu = getInputData(dayNum, year, opener, delay, firstTime)
+            firstTime = False
 
         if not os.path.exists(dayPyPath) or (overwrite and overwriteDayPy):
             os.makedirs(os.path.dirname(dayPyPath))
@@ -338,4 +347,4 @@ def build(year=2016, overwrite=False, overwriteDesc=False, overwriteInpu=False, 
 
 
 if __name__ == "__main__":
-    build(overwrite=True, overwriteDayPy=False, overwriteDesc=True, skip=(1, 2, 3,))
+    build(overwrite=True, overwriteDayPy=False, overwriteDesc=True, skip=(1, 2, 3, 4))
