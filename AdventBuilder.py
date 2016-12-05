@@ -219,8 +219,8 @@ def createHtmlLoader():
     return opener
 
 
-def getInputData(dayNum, year=2016, opener=None, delay=5):
-    return getHtmlPageWithCookies(DAY_HTML_DAY_PATH_INPUT_BUILD.format(year=year, dayNum=dayNum), opener, delay)
+def getInputData(dayNum, year=2016, opener=None, delay=5, firstTime=True):
+    return getHtmlPageWithCookies(DAY_HTML_DAY_PATH_INPUT_BUILD.format(year=year, dayNum=dayNum), opener, delay, firstTime)
 
 
 def getHtmlPageWithCookies(path, opener=None, delay=5, firstTime=True):
@@ -240,8 +240,8 @@ def getHtmlPageWithCookies(path, opener=None, delay=5, firstTime=True):
     return html
 
 
-def getHtmlDesc(dayNum, year=2016, opener=None, delay=5):
-    html = getHtmlPageWithCookies(DAY_HTML_DAY_PATH_BUILD.format(year=year, dayNum=dayNum), opener, delay)
+def getHtmlDesc(dayNum, year=2016, opener=None, delay=5, firstTime=True):
+    html = getHtmlPageWithCookies(DAY_HTML_DAY_PATH_BUILD.format(year=year, dayNum=dayNum), opener, delay, firstTime)
     if html is None:
         return None
     else:
