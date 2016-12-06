@@ -273,8 +273,8 @@ def setupDayVariables(path):
         baseDir = os.path.basename(path)
         DAY_NUM = int(baseDir.split("day")[1])
         DAY_DESC = ''.join(open(os.path.join(path, "desc_{}.md".format(DAY_NUM))).readlines())
-        DAY_INPUT = open(os.path.join(path, "input_{}.txt".format(DAY_NUM))).readlines()
-        DAY_INPUT_STR = ''.join(DAY_INPUT)
+        DAY_INPUT = open(os.path.join(path, "input_{}.txt".format(DAY_NUM))).read().splitlines()
+        DAY_INPUT_STR = '\n'.join(DAY_INPUT)
     except ValueError:
         print "File {} in advent day folder".format(path)
         DAY_NUM = 0
@@ -347,4 +347,4 @@ def build(year=2016, overwrite=False, overwriteDesc=False, overwriteInpu=False, 
 
 
 if __name__ == "__main__":
-    build(overwrite=True, overwriteDayPy=False, overwriteDesc=True, skip=(1, 2, 3, 4))
+    build(overwrite=True, overwriteDayPy=False, overwriteDesc=True, skip=(1, 2, 3, 4, 5))
