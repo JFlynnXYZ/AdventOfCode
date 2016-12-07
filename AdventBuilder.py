@@ -347,4 +347,4 @@ def build(year=2016, overwrite=False, overwriteDesc=False, overwriteInpu=False, 
 
 
 if __name__ == "__main__":
-    build(overwrite=True, overwriteDayPy=False, overwriteDesc=True, skip=(1, 2, 3, 4, 5))
+    build(overwrite=True, overwriteDayPy=False, overwriteDesc=True, skip=list(range(1,6+1)))
