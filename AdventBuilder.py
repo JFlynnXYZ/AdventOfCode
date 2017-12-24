@@ -5,6 +5,7 @@ have already downloaded in the build function and use sparingly!
 """
 import os
 import time
+import datetime
 import urllib2
 from HTMLParser import HTMLParser
 import textwrap
@@ -288,12 +289,14 @@ def setupDayVariables(path):
 def build(year=2016, overwrite=False, overwriteDesc=False, overwriteInpu=False, overwriteDayPy=False, delay=5, skip=(None,)):
     opener = createHtmlLoader()
     firstTime = True
-    for dayNum in range(1, 26):
+    christmas_date = datetime.date(year=year, month=12, day=25)
+    end_range = christmas_date.day + 1 if datetime.datetime.now() > christmas_date else datetime.datetime.now().day + 1
+    for dayNum in xrange(1, end_range):
         if dayNum in skip:
             print "Skipping dayNum {}".format(dayNum)
             continue
 
-        dayPath = os.path.join(__dir__, "day", "day"+str(dayNum))
+        dayPath = os.path.join(__dir__, str(year), "day", "day"+str(dayNum))
         if os.path.exists(dayPath) and not overwrite:
             print "Not overwriting and files already downloaded: {}".format(dayNum)
             continue
@@ -347,4 +350,4 @@ def build(year=2016, overwrite=False, overwriteDesc=False, overwriteInpu=False, 
 
 
 if __name__ == "__main__":
-    build(overwrite=True, overwriteDayPy=False, overwriteDesc=True, skip=list(range(1,6+1)))
+    build(year=datetime.datetime.now().year, overwrite=False, overwriteDayPy=False, overwriteDesc=False)

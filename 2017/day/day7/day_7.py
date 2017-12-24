@@ -13,16 +13,8 @@ DAY_NUM, DAY_DESC, DAY_INPUT, DAY_INPUT_STR = setupDayVariables(__dir__)
 ########################################################################################################################
 
 
-def solve1(inp):
-    return None
-
-
-def solve2(inp):
-    return None
-
-
 def solution():
-    return solve1(DAY_INPUT), solve2(DAY_INPUT)
+    return None, None
 
 
 ########################################################################################################################
