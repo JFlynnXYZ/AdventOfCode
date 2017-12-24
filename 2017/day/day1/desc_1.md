@@ -32,3 +32,21 @@ and the third digit (```2```) matches the fourth digit.
 - ```91212129``` produces ```9``` because the only digit that matches the next one is the last digit, ```9```.
 
 __What is the solution__ to your captcha?
+
+# --- Part Two ---
+You notice a progress bar that jumps to 50% completion. Apparently, the door isn't yet satisfied, but it did emit a
+__star__ as encouragement. The instructions change:
+
+Now, instead of considering the __next__ digit, it wants you to consider the digit __halfway around__ the circular list.
+That is, if your list contains ```10``` items, only include a digit in your sum if the digit ```10/2 = 5``` steps
+forward matches it. Fortunately, your list has an even number of elements.
+
+For example:
+
+- ```1212``` produces ```6```: the list contains ```4``` items, and all four digits match the digit ```2``` items ahead.
+- ```1221``` produces ```0```, because every comparison is between a ```1``` and a ```2```.
+- ```123425``` produces ```4```, because both ```2```s match each other, but no other digit has a match.
+- ```123123``` produces ```12```.
+- ```12131415``` produces ```4```.
+
+__What is the solution__ to your new captcha?

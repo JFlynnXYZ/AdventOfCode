@@ -13,8 +13,37 @@ DAY_NUM, DAY_DESC, DAY_INPUT, DAY_INPUT_STR = setupDayVariables(__dir__)
 ########################################################################################################################
 
 
+def solve1(inp):
+    ptr = 0
+    steps = 0
+    while ptr < len(inp):
+        instr = inp[ptr]
+        inp[ptr] += 1
+        ptr += instr
+        steps += 1
+    return steps
+
+
+def solve2(inp):
+    ptr = 0
+    steps = 0
+    while ptr < len(inp) and ptr >= 0:
+        last_ptr = ptr
+        instr = inp[ptr]
+        ptr += instr
+        if instr >= 3:
+            incr = -1
+        else:
+            incr = 1
+        inp[last_ptr] += incr
+        steps += 1
+    return steps
+
+
 def solution():
-    return None, None
+    inp = [int(x) for x in DAY_INPUT]
+    inp2 = inp[:]
+    return solve1(inp), solve2(inp2)
 
 
 ########################################################################################################################
