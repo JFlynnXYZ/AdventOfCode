@@ -13,16 +13,33 @@ DAY_NUM, DAY_DESC, DAY_INPUT, DAY_INPUT_STR = setupDayVariables(__dir__)
 ########################################################################################################################
 
 
+from itertools import cycle
+
+
 def solve1(inp):
-    return None
+    results = []
+    while inp not in results:
+        results.append(inp[:])
+        max_value = max(inp)
+        max_idx = inp.index(max_value)
+        inp[max_idx] = 0
+        for i in (x % len(inp) for x in range(max_idx+1,
+                                              max_idx + 1 + max_value)):
+            inp[i] += 1
+
+    return len(results)
 
 
 def solve2(inp):
-    return None
+    return solve1(inp)
 
 
 def solution():
-    return solve1(DAY_INPUT), solve2(DAY_INPUT)
+    inp = [int(x) for x in DAY_INPUT_STR.split()]
+    # Reusing the same memory from the list, so inp contains the final
+    # value that starts the infinite loop. Just pass it through again
+    # to find how long the loop is.
+    return solve1(inp), solve2(inp)
 
 
 ########################################################################################################################

@@ -1,2 +1,2 @@
 # replace the last value of this cookie line to your session id
-.adventofcode.com	TRUE	/	FALSE	13440434875355351	session	<your_session_here>
+.adventofcode.com	TRUE	/	FALSE	13440434875355351	session	53616c7465645f5f3b77402abf9e9f44fdfca31b685152a4742b4e34b3ed33de7a5dcdcf09fb0ac3ea6e95849c2425d4

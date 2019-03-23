@@ -290,7 +290,7 @@ def build(year=2016, overwrite=False, overwriteDesc=False, overwriteInpu=False, 
     opener = createHtmlLoader()
     firstTime = True
     christmas_date = datetime.date(year=year, month=12, day=25)
-    end_range = christmas_date.day + 1 if datetime.datetime.now() > christmas_date else datetime.datetime.now().day + 1
+    end_range = christmas_date.day + 1 if datetime.datetime.now().date() > christmas_date else datetime.datetime.now().day + 1
     for dayNum in xrange(1, end_range):
         if dayNum in skip:
             print "Skipping dayNum {}".format(dayNum)
@@ -323,7 +323,8 @@ def build(year=2016, overwrite=False, overwriteDesc=False, overwriteInpu=False, 
             firstTime = False
 
         if not os.path.exists(dayPyPath) or (overwrite and overwriteDayPy):
-            os.makedirs(os.path.dirname(dayPyPath))
+            if not os.path.exists(os.path.dirname(dayPyPath)):
+                os.makedirs(os.path.dirname(dayPyPath))
             shutil.copyfile("day.py", dayPyPath)
             print "\tday.py copied to {}".format(dayPyPath)
             filesCreated = True
@@ -350,4 +351,5 @@ def build(year=2016, overwrite=False, overwriteDesc=False, overwriteInpu=False, 
 
 
 if __name__ == "__main__":
-    build(year=datetime.datetime.now().year, overwrite=False, overwriteDayPy=False, overwriteDesc=False)
+    build(year=datetime.datetime.now().year, overwrite=True, overwriteDayPy=True, overwriteDesc=False,
+          skip=range(0,5))
