@@ -3,14 +3,35 @@ Be careful when using this! The site can't take a lot of people accessing it at 
 requests are with a delay of 5 seconds to stop a DDOS of the site. I recommend you skip the days you
 have already downloaded in the build function and use sparingly!
 """
+from __future__ import print_function
+try:
+    from urllib.parse import urlparse, urlencode
+    from urllib.request import urlopen, Request
+    from urllib.error import HTTPError
+except ImportError:
+    from urlparse import urlparse
+    from urllib import urlencode
+    from urllib2 import urlopen, Request, HTTPError, build_opener, HTTPCookieProcessor
+
 import os
 import time
 import datetime
-import urllib2
-from HTMLParser import HTMLParser
+try:
+    from HTMLParser import HTMLParser
+except ImportError:
+    from html.parser import HTMLParser
+    
+try:
+    from cookielib import FileCookieJar, Cookie, _warn_unhandled_exception
+except ImportError:
+    from http.cookiejar import FileCookieJar, _warn_unhandled_exception, LoadError
+    from http.cookies import SimpleCookie as Cookie
+    
+    
 import textwrap
-import cookielib
+
 import shutil
+
 
 __dir__ = os.path.dirname(__file__)
 
@@ -106,7 +127,7 @@ class AdventHTMLParser(HTMLParser):
             self.desc += data
 
 
-class AdventCookieJar(cookielib.FileCookieJar):
+class AdventCookieJar(FileCookieJar):
     def _really_load(self, f, filename, ignore_discard, ignore_expires):
         now = time.time()
         line = None
@@ -144,7 +165,7 @@ class AdventCookieJar(cookielib.FileCookieJar):
                     discard = True
 
                 # assume path_specified is false
-                c = cookielib.Cookie(0, name, value,
+                c = Cookie(0, name, value,
                                      None, False,
                                      domain, domain_specified, initial_dot,
                                      path, False,
@@ -163,8 +184,8 @@ class AdventCookieJar(cookielib.FileCookieJar):
         except IOError:
             raise
         except Exception:
-            cookielib._warn_unhandled_exception()
-            raise cookielib.LoadError("invalid Netscape format cookies file %r: %r" %
+            _warn_unhandled_exception()
+            raise LoadError("invalid Netscape format cookies file %r: %r" %
                                       (filename, line))
 
     def save(self, filename=None, ignore_discard=False,
@@ -216,7 +237,7 @@ class AdventCookieJar(cookielib.FileCookieJar):
 def createHtmlLoader():
     cj = AdventCookieJar("cookies.txt")
     cj.load()
-    opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj))
+    opener = build_opener(HTTPCookieProcessor(cj))
     return opener
 
 
@@ -232,9 +253,9 @@ def getHtmlPageWithCookies(path, opener=None, delay=5, firstTime=True):
         opener = createHtmlLoader()
     try:
         html = opener.open(path).read()
-    except urllib2.HTTPError as e:
+    except HTTPError as e:
         if e.code == 404:
-            print "Page '{}' Not found".format(path)
+            print("Page '{}' Not found".format(path))
             return None
         else:
             raise e
@@ -277,7 +298,7 @@ def setupDayVariables(path):
         DAY_INPUT = open(os.path.join(path, "input_{}.txt".format(DAY_NUM))).read().splitlines()
         DAY_INPUT_STR = '\n'.join(DAY_INPUT)
     except ValueError:
-        print "File {} in advent day folder".format(path)
+        print("File {} in advent day folder".format(path))
         DAY_NUM = 0
         DAY_DESC = ""
         DAY_INPUT = ""
@@ -293,12 +314,12 @@ def build(year=2016, overwrite=False, overwriteDesc=False, overwriteInpu=False, 
     end_range = christmas_date.day + 1 if datetime.datetime.now().date() > christmas_date else datetime.datetime.now().day + 1
     for dayNum in xrange(1, end_range):
         if dayNum in skip:
-            print "Skipping dayNum {}".format(dayNum)
+            print("Skipping dayNum {}".format(dayNum))
             continue
 
         dayPath = os.path.join(__dir__, str(year), "day", "day"+str(dayNum))
         if os.path.exists(dayPath) and not overwrite:
-            print "Not overwriting and files already downloaded: {}".format(dayNum)
+            print("Not overwriting and files already downloaded: {}".format(dayNum))
             continue
         else:
             pathExists = True
@@ -316,7 +337,7 @@ def build(year=2016, overwrite=False, overwriteDesc=False, overwriteInpu=False, 
             if desc is None:
                 break
             else:
-                print "Page {} found".format(dayNum)
+                print("Page {} found".format(dayNum))
 
         if not os.path.exists(inpuPath) or overwriteInpu:
             inpu = getInputData(dayNum, year, opener, delay, firstTime)
@@ -326,19 +347,19 @@ def build(year=2016, overwrite=False, overwriteDesc=False, overwriteInpu=False, 
             if not os.path.exists(os.path.dirname(dayPyPath)):
                 os.makedirs(os.path.dirname(dayPyPath))
             shutil.copyfile("day.py", dayPyPath)
-            print "\tday.py copied to {}".format(dayPyPath)
+            print("\tday.py copied to {}".format(dayPyPath))
             filesCreated = True
 
         if not os.path.exists(descPath) or (overwrite and overwriteDesc):
             with open(descPath, 'w+') as descF:
                 descF.write(prettyDesc(desc))
-            print "\tDescription created at {}".format(descPath)
+            print("\tDescription created at {}".format(descPath))
             filesCreated = True
 
         if not os.path.exists(inpuPath) or (overwrite and overwriteInpu):
             with open(inpuPath, 'w+') as inpuF:
                 inpuF.write(inpu)
-            print "\tInput created at {}".format(descPath)
+            print("\tInput created at {}".format(descPath))
             filesCreated = True
 
         if not os.path.exists(initPath) or overwrite:
@@ -347,9 +368,10 @@ def build(year=2016, overwrite=False, overwriteDesc=False, overwriteInpu=False, 
             filesCreated = True
 
         if not filesCreated:
-            print "\t No files created"
+            print("\t No files created")
 
 
 if __name__ == "__main__":
-    build(year=datetime.datetime.now().year, overwrite=True, overwriteDayPy=True, overwriteDesc=False,
-          skip=range(0,5))
+    build(year=datetime.datetime.now().year, overwrite=False,
+          overwriteDayPy=False, overwriteDesc=True,
+          skip=range(0, datetime.datetime.now().day))
