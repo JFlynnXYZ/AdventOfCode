@@ -1,2 +1,2 @@
-# replace the last value of this cookie line to your session id
-.adventofcode.com	TRUE	/	FALSE	13440434875355351	session	53616c7465645f5f69dcc52f5805a74341d7f6deb489fb920014331bb7e2c9b902cb6a218890e228fb1239167e3b7bd1
+# Netscape HTTP Cookie File
+.adventofcode.com	TRUE	/	FALSE	13440434875355351	session	53616c7465645f5fd86e180c1163529b96986416c17234f3e18e9b6014da26cf106ab086a7f892f8ca36c81e6df0e2f8

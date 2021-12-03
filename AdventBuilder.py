@@ -3,29 +3,20 @@ Be careful when using this! The site can't take a lot of people accessing it at 
 requests are with a delay of 5 seconds to stop a DDOS of the site. I recommend you skip the days you
 have already downloaded in the build function and use sparingly!
 """
-from __future__ import print_function
-try:
-    from urllib.parse import urlparse, urlencode
-    from urllib.request import urlopen, Request
-    from urllib.error import HTTPError
-except ImportError:
-    from urlparse import urlparse
-    from urllib import urlencode
-    from urllib2 import urlopen, Request, HTTPError, build_opener, HTTPCookieProcessor
+from urllib.parse import urlparse, urlencode
+from urllib.request import urlopen, Request, build_opener, HTTPCookieProcessor
+from urllib.error import HTTPError
 
 import os
 import time
 import datetime
-try:
-    from HTMLParser import HTMLParser
-except ImportError:
-    from html.parser import HTMLParser
+import argparse
+
+from html.parser import HTMLParser
     
-try:
-    from cookielib import FileCookieJar, Cookie, _warn_unhandled_exception
-except ImportError:
-    from http.cookiejar import FileCookieJar, _warn_unhandled_exception, LoadError
-    from http.cookies import SimpleCookie as Cookie
+
+from http.cookiejar import FileCookieJar, MozillaCookieJar, _warn_unhandled_exception, LoadError
+from http.cookies import SimpleCookie as Cookie
     
     
 import textwrap
@@ -37,6 +28,10 @@ __dir__ = os.path.dirname(__file__)
 
 SINGLE_NEWLINE_TAGS = ("h1", "h2", "p")
 LINE_LENGTH = 120
+START_YEAR = 2015
+NOW = datetime.datetime.now()
+SKIP_DEFAULT = set(range(1, NOW.day)) if NOW.month >= 12 else set()
+VALID_YEARS = tuple(START_YEAR+i for i in range(NOW.year + (NOW.month >= 12) - START_YEAR))
 
 COOKIES_PATH = os.path.join(__dir__, "cookies.txt")
 HTML_PATH_ROOT = "http://adventofcode.com"
@@ -145,40 +140,8 @@ class AdventCookieJar(FileCookieJar):
                 if line.strip().startswith(("#", "$")) or line.strip() == "":
                     continue
 
-                domain, domain_specified, path, secure, expires, name, value = \
-                    line.split("\t")
-                secure = (secure == "TRUE")
-                domain_specified = (domain_specified == "TRUE")
-                if name == "":
-                    # cookies.txt regards 'Set-Cookie: foo' as a cookie
-                    # with no name, whereas cookielib regards it as a
-                    # cookie with no value.
-                    name = value
-                    value = None
-
-                initial_dot = domain.startswith(".")
-                assert domain_specified == initial_dot
-
-                discard = False
-                if expires == "":
-                    expires = None
-                    discard = True
-
                 # assume path_specified is false
-                c = Cookie(0, name, value,
-                                     None, False,
-                                     domain, domain_specified, initial_dot,
-                                     path, False,
-                                     secure,
-                                     expires,
-                                     discard,
-                                     None,
-                                     None,
-                                     {})
-                if not ignore_discard and c.discard:
-                    continue
-                if not ignore_expires and c.is_expired(now):
-                    continue
+                c = Cookie(line)
                 self.set_cookie(c)
 
         except IOError:
@@ -235,14 +198,14 @@ class AdventCookieJar(FileCookieJar):
 
 
 def createHtmlLoader():
-    cj = AdventCookieJar("cookies.txt")
+    cj = MozillaCookieJar("cookies.txt")
     cj.load()
     opener = build_opener(HTTPCookieProcessor(cj))
     return opener
 
 
 def getInputData(dayNum, year=2016, opener=None, delay=5, firstTime=True):
-    return getHtmlPageWithCookies(DAY_HTML_DAY_PATH_INPUT_BUILD.format(year=year, dayNum=dayNum), opener, delay, firstTime)
+    return getHtmlPageWithCookies(DAY_HTML_DAY_PATH_INPUT_BUILD.format(year=year, dayNum=dayNum), opener, delay, firstTime).decode("utf-8")
 
 
 def getHtmlPageWithCookies(path, opener=None, delay=5, firstTime=True):
@@ -270,7 +233,7 @@ def getHtmlDesc(dayNum, year=2016, opener=None, delay=5, firstTime=True):
         pass
 
     htmlParser = AdventHTMLParser()
-    htmlParser.feed(html)
+    htmlParser.feed(html.decode("utf-8") )
     return htmlParser.desc
 
 
@@ -307,71 +270,126 @@ def setupDayVariables(path):
     return DAY_NUM, DAY_DESC, DAY_INPUT, DAY_INPUT_STR
 
 
-def build(year=2016, overwrite=False, overwriteDesc=False, overwriteInpu=False, overwriteDayPy=False, delay=5, skip=(None,)):
+def build(year=(2015,), overwriteSolution=False, overwriteDesc=False, overwriteInput=False, overwriteDayPy=False, overwriteParentInit=False, delay=5, noskip=False, skip=set()):
     opener = createHtmlLoader()
     firstTime = True
-    christmas_date = datetime.date(year=year, month=12, day=25)
-    end_range = christmas_date.day + 1 if datetime.datetime.now().date() > christmas_date else datetime.datetime.now().day + 1
-    for dayNum in xrange(1, end_range):
-        if dayNum in skip:
-            print("Skipping dayNum {}".format(dayNum))
-            continue
+    if noskip:
+        skip = set()
 
-        dayPath = os.path.join(__dir__, str(year), "day", "day"+str(dayNum))
-        if os.path.exists(dayPath) and not overwrite:
-            print("Not overwriting and files already downloaded: {}".format(dayNum))
-            continue
-        else:
-            pathExists = True
+    for y in year:
+        christmas_date = datetime.date(year=y, month=12, day=25)
+        end_range = christmas_date.day + 1 if datetime.datetime.now().date() > christmas_date else datetime.datetime.now().day + 1
 
-        pyFileName = "day_" + str(dayNum)
-        descPath = os.path.join(dayPath, "desc_" + str(dayNum) + ".md")
-        inpuPath = os.path.join(dayPath, "input_" + str(dayNum) + ".txt")
-        dayPyPath = os.path.join(dayPath, pyFileName + ".py")
-        initPath = os.path.join(dayPath, "__init__.py")
-        filesCreated = False
+        dayParent = os.path.join(__dir__, str(y), "day")
+        parentInit = os.path.join(dayParent, "__init__.py")
+        if not os.path.exists(parentInit) or overwriteParentInit:
+            if not os.path.exists(dayParent):
+                os.makedirs(dayParent)
 
-        if not os.path.exists(descPath) or overwriteDesc:
-            desc = getHtmlDesc(dayNum, year, opener, delay, firstTime)
-            firstTime = False
-            if desc is None:
-                break
+            print(f"Writing {parentInit}")
+            with open(parentInit, 'w+') as initF:
+                initF.write('"""day init"""')
+
+        for dayNum in range(1, end_range):
+            if dayNum in skip:
+                print("Skipping dayNum {}".format(dayNum))
+                continue
+
+            dayPath = os.path.join(dayParent, "day"+str(dayNum))
+
+            if os.path.exists(dayPath) and not any((overwriteDesc, overwriteInput, overwriteDayPy, overwriteSolution, overwriteParentInit)):
+                print("Not overwriting and files already downloaded: {}".format(dayNum))
+                continue
             else:
-                print("Page {} found".format(dayNum))
+                pathExists = True
 
-        if not os.path.exists(inpuPath) or overwriteInpu:
-            inpu = getInputData(dayNum, year, opener, delay, firstTime)
-            firstTime = False
+            pyFileName = "day_" + str(dayNum)
 
-        if not os.path.exists(dayPyPath) or (overwrite and overwriteDayPy):
-            if not os.path.exists(os.path.dirname(dayPyPath)):
-                os.makedirs(os.path.dirname(dayPyPath))
-            shutil.copyfile("day.py", dayPyPath)
-            print("\tday.py copied to {}".format(dayPyPath))
-            filesCreated = True
+            descPath = os.path.join(dayPath, "desc_" + str(dayNum) + ".md")
+            inpuPath = os.path.join(dayPath, "input_" + str(dayNum) + ".txt")
+            dayPyPath = os.path.join(dayPath, pyFileName + ".py")
+            initPath = os.path.join(dayPath, "__init__.py")
+            filesCreated = False
 
-        if not os.path.exists(descPath) or (overwrite and overwriteDesc):
-            with open(descPath, 'w+') as descF:
-                descF.write(prettyDesc(desc))
-            print("\tDescription created at {}".format(descPath))
-            filesCreated = True
 
-        if not os.path.exists(inpuPath) or (overwrite and overwriteInpu):
-            with open(inpuPath, 'w+') as inpuF:
-                inpuF.write(inpu)
-            print("\tInput created at {}".format(descPath))
-            filesCreated = True
+            if not os.path.exists(descPath) or overwriteDesc:
+                desc = getHtmlDesc(dayNum, y, opener, delay, firstTime)
+                firstTime = False
+                if desc is None:
+                    break
+                else:
+                    print("Page {} found".format(dayNum))
 
-        if not os.path.exists(initPath) or overwrite:
-            with open(initPath, 'w+') as initF:
-                initF.write("from {} import *".format(pyFileName))
-            filesCreated = True
+            if not os.path.exists(inpuPath) or overwriteInput:
+                inpu = getInputData(dayNum, y, opener, delay, firstTime)
+                firstTime = False
 
-        if not filesCreated:
-            print("\t No files created")
+            if not os.path.exists(dayPyPath) or overwriteDayPy:
+                if not os.path.exists(os.path.dirname(dayPyPath)):
+                    os.makedirs(os.path.dirname(dayPyPath))
+                shutil.copyfile("day.py", dayPyPath)
+                print("\tday.py copied to {}".format(dayPyPath))
+                filesCreated = True
+
+            if not os.path.exists(descPath) or overwriteDesc:
+                with open(descPath, 'w+') as descF:
+                    descF.write(prettyDesc(desc))
+                print("\tDescription created at {}".format(descPath))
+                filesCreated = True
+
+            if not os.path.exists(inpuPath) or overwriteInput:
+                with open(inpuPath, 'w+') as inpuF:
+                    inpuF.write(inpu)
+                print("\tInput created at {}".format(descPath))
+                filesCreated = True
+
+            if not os.path.exists(initPath) or overwriteSolution:
+                with open(initPath, 'w+') as initF:
+                    initF.write("from {} import *".format(pyFileName))
+                filesCreated = True
+
+            if not filesCreated:
+                print("\t No files created")
+
+
+class ParseRange(argparse.Action):
+    """Parses argparse argument as a range"""
+
+    def __init__(self, option_strings, dest, nargs=None, **kwargs):
+        super().__init__(option_strings, dest, nargs, **kwargs)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        if len(values) <= 0:
+            setattr(namespace, self.dest, set())
+
+        if isinstance(values, str):
+            values = (values,)
+
+        for v in values:
+            if v.startswith("r"):
+                setattr(namespace, self.dest, getattr(namespace, self.dest).union(set(range(*(int(x) for x in v[1:].split(":"))))))
+            else:
+                getattr(namespace, self.dest).add(int(v))
+
+
+
+
+def argparser():
+    ag = argparse.ArgumentParser(description="Download advent of code for offline use and help setup code")
+    ag.add_argument("year", type=int, help="the year", nargs="+", choices=VALID_YEARS, default=NOW.year)
+    ag.add_argument("--overwriteSolution", "-o", action="store_true", help="whether we can overwrite the solution")
+    ag.add_argument("--overwriteDayPy", "-odp", action="store_true", help="whether we can overwrite the day python file")
+    ag.add_argument("--overwriteDesc", "-od", action="store_true", help="whether we should overwrite the description")
+    ag.add_argument("--overwriteInput", "-oi", action="store_true", help="whether we should overwrite the input")
+    ag.add_argument("--overwriteParentInit", "-opi", action="store_true", help="whether we should overwrite the parent init")
+    ag.add_argument("--delay", "-d", type=int, help="how long the delay", default=5)
+    ag.add_argument("--skip", "-s", action=ParseRange, type=str, nargs="*", default=SKIP_DEFAULT,
+                    help="what days to skip as either numbers in a list or range format by prefixing with 'r'")
+    ag.add_argument("--noskip", "-ns", action="store_true", help="to disable any skipping. Same as putting --skip and leaving blank")
+    return ag
 
 
 if __name__ == "__main__":
-    build(year=datetime.datetime.now().year, overwrite=False,
-          overwriteDayPy=False, overwriteDesc=True,
-          skip=range(0, datetime.datetime.now().day))
+    agp = argparser()
+    args = agp.parse_args()
+    build(**args.__dict__)
