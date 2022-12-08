@@ -62,7 +62,10 @@ class AdventHTMLParser(HTMLParser):
     def handle_tag(self, tag, attrs, isStart=True):
         if self.foundDesc:
             if tag == "em":
-                self.desc += "__"
+                if self.isPre or self.isCode:
+                    self.desc += "<b>" if isStart else "</b>"
+                else:
+                    self.desc += "__"
             elif tag == "a":
                 if isStart:
                     self.storedLink = self.get_link_from_tag(attrs)
@@ -75,9 +78,11 @@ class AdventHTMLParser(HTMLParser):
                 if not isStart:
                     self.desc += "\n"
             elif tag == "code":
-                self.desc += "```"
-                if isStart and self.isPre:
+                if self.isPre:
+                    self.desc += "<pre>" if isStart else "</pre>"
                     self.desc += "\n"
+                else:
+                    self.desc += "<code>" if isStart else "</code>"
             elif tag == "h2" and isStart:
                 self.desc += "# "
 

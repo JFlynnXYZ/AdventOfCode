@@ -9,26 +9,28 @@ __big list of the section assignments for each pair__ (your puzzle input).
 
 For example, consider the following list of section assignment pairs:
 
-```
+<pre>
 2-4,6-8
 2-3,4-5
 5-7,7-9
 2-8,3-7
 6-6,4-6
 2-6,4-8
-```
+</pre>
+
 For the first few pairs, this list means:
 
-- Within the first pair of Elves, the first Elf was assigned sections ```2-4``` (sections ```2```, ```3```, and
-```4```), while the second Elf was assigned sections ```6-8``` (sections ```6```, ```7```, ```8```).
+- Within the first pair of Elves, the first Elf was assigned sections <code>2-4</code> (sections <code>2</code>,
+<code>3</code>, and <code>4</code>), while the second Elf was assigned sections <code>6-8</code> (sections
+<code>6</code>, <code>7</code>, <code>8</code>).
 - The Elves in the second pair were each assigned two sections.
-- The Elves in the third pair were each assigned three sections: one got sections ```5```, ```6```, and ```7```, while
-the other also got ```7```, plus ```8``` and ```9```.
+- The Elves in the third pair were each assigned three sections: one got sections <code>5</code>, <code>6</code>, and
+<code>7</code>, while the other also got <code>7</code>, plus <code>8</code> and <code>9</code>.
 
 This example list uses single-digit section IDs to make it easier to draw; your actual list might contain larger
 numbers. Visually, these pairs of section assignments look like this:
 
-```
+<pre>
 .234.....  2-4
 .....678.  6-8
 
@@ -46,10 +48,29 @@ numbers. Visually, these pairs of section assignments look like this:
 
 .23456...  2-6
 ...45678.  4-8
-```
-Some of the pairs have noticed that one of their assignments __fully contains__ the other. For example, ```2-8``` fully
-contains ```3-7```, and ```6-6``` is fully contained by ```4-6```. In pairs where one assignment fully contains the
-other, one Elf in the pair would be exclusively cleaning sections their partner will already be cleaning, so these seem
-like the most in need of reconsideration. In this example, there are ```__2__``` such pairs.
+</pre>
+
+Some of the pairs have noticed that one of their assignments __fully contains__ the other. For example, <code>2-8</code>
+fully contains <code>3-7</code>, and <code>6-6</code> is fully contained by <code>4-6</code>. In pairs where one
+assignment fully contains the other, one Elf in the pair would be exclusively cleaning sections their partner will
+already be cleaning, so these seem like the most in need of reconsideration. In this example, there are
+<code><b>2</b></code> such pairs.
 
 __In how many assignment pairs does one range fully contain the other?__
+
+# --- Part Two ---
+It seems like there is still quite a bit of duplicate work planned. Instead, the Elves would like to know the number of
+pairs that __overlap at all__.
+
+In the above example, the first two pairs (<code>2-4,6-8</code> and <code>2-3,4-5</code>) don't overlap, while the
+remaining four pairs (<code>5-7,7-9</code>, <code>2-8,3-7</code>, <code>6-6,4-6</code>, and <code>2-6,4-8</code>) do
+overlap:
+
+- <code>5-7,7-9</code> overlaps in a single section, <code>7</code>.
+- <code>2-8,3-7</code> overlaps all of the sections <code>3</code> through <code>7</code>.
+- <code>6-6,4-6</code> overlaps in a single section, <code>6</code>.
+- <code>2-6,4-8</code> overlaps in sections <code>4</code>, <code>5</code>, and <code>6</code>.
+
+So, in this example, the number of overlapping assignment pairs is <code><b>4</b></code>.
+
+__In how many assignment pairs do the ranges overlap?__
