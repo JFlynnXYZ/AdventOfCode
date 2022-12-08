@@ -359,7 +359,7 @@ class ParseRange(argparse.Action):
         super().__init__(option_strings, dest, nargs, **kwargs)
 
     def __call__(self, parser, namespace, values, option_string=None):
-        if len(values) <= 0:
+        if len(values) >= 0:
             setattr(namespace, self.dest, set())
 
         if isinstance(values, str):
@@ -383,7 +383,7 @@ def argparser():
     ag.add_argument("--overwriteInput", "-oi", action="store_true", help="whether we should overwrite the input")
     ag.add_argument("--overwriteParentInit", "-opi", action="store_true", help="whether we should overwrite the parent init")
     ag.add_argument("--delay", "-d", type=int, help="how long the delay", default=5)
-    ag.add_argument("--skip", "-s", action=ParseRange, type=str, nargs="*", default=SKIP_DEFAULT,
+    ag.add_argument("--skip", "-s", action=ParseRange, type=str, nargs="*", default=tuple(),
                     help="what days to skip as either numbers in a list or range format by prefixing with 'r'")
     ag.add_argument("--noskip", "-ns", action="store_true", help="to disable any skipping. Same as putting --skip and leaving blank")
     return ag
